@@ -115,8 +115,8 @@ struct Random
         return random_gauss_buffer + i;
     }
 
-    Random(std::minstd_rand::result_type seed)
-        : rng(seed)
+    Random()
+        : rng(std::random_device()())
     {
         random_buffer = make_random_buffer();
         random_buffer_index = _xorshift();
@@ -142,8 +142,7 @@ struct IKBase : Random
     virtual void setParams(const IKParams& p) {}
 
     IKBase(const IKParams& p)
-        : Random(p.random_seed)
-        , model(p.robot_model)
+        : model(p.robot_model)
         , modelInfo(p.robot_model)
         , params(p)
     {

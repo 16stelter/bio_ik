@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.0.2)
+set(CMAKE_CXX_STANDARD 14)
+
+cmake_minimum_required(VERSION 3.5)
 project(bio_ik)
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -6,17 +8,16 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  eigen_conversions
-  moveit_core
-  moveit_ros_planning
-  pluginlib
-  roscpp
-  tf2
-  tf2_eigen
-  tf2_kdl
-  tf2_geometry_msgs
-)
+find_package(ament_cmake REQUIRED)
+find_package(moveit_common REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_kdl REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
 
 find_package(OpenMP)
 # the specific flag is not yet present in cmake 2.8.12
@@ -63,19 +64,22 @@ else()
     set(CPPOPTLIB_INCLUDE_DIRS)
 endif()
 
-catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS
-        eigen_conversions
+
+ament_export_dependencies(
         moveit_core
         moveit_ros_planning
         pluginlib
-        roscpp
+        rclcpp
         tf2
+        tf2_ros
         tf2_kdl
-        tf2_geometry_msgs
-)
+        tf2_geometry_msgs)
+
+ament_export_include_directories(include)
+
+ament_export_libraries(${PROJECT_NAME})
+
+ament_package()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-frecord-gcc-switches)
@@ -91,14 +95,13 @@ include_directories(
     include
     ${FANN_INCLUDE_DIRS}
     ${CPPOPTLIB_INCLUDE_DIRS}
-    ${catkin_INCLUDE_DIRS}
+        ${AMENT_INCLUDE_DIRS}
 )
 
 set(SOURCES
     src/goal_types.cpp
     src/kinematics_plugin.cpp
     src/problem.cpp
-
     src/ik_test.cpp
     src/ik_gradient.cpp
     src/ik_evolution_1.cpp
@@ -117,10 +120,15 @@ add_library(${PROJECT_NAME} ${SOURCES})
 
 set_target_properties(${MOVEIT_LIB_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
 
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+ament_target_dependencies(${PROJECT_NAME} tf2 Eigen3 rclcpp)
 
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+  rclcpp
+  std_msgs
+  tf2
+  tf2_ros
+  tf2_kdl
+  tf2_geometry_msgs
   ${FANN_LIBRARIES}
   ${OpenMP_LIBS}
 
@@ -128,8 +136,8 @@ target_link_libraries(${PROJECT_NAME}
   -static-libstdc++
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION include/${PROJECT_NAME})
 
-install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
 
-install(FILES bio_ik_kinematics_description.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(FILES bio_ik_kinematics_description.xml DESTINATION share/${PROJECT_NAME})

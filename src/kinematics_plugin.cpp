@@ -51,7 +51,6 @@
 #include <urdf/model.h>
 #include <urdf_model/model.h>
 
-#include <eigen_conversions/eigen_msg.h>
 #include <tf2_eigen/tf2_eigen.h>
 //#include <moveit/common_planning_interface_objects/common_objects.h>
 #include <moveit/kinematics_base/kinematics_base.h>
@@ -190,24 +189,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
   bool load(const moveit::core::RobotModelConstPtr &model,
             std::string robot_description, std::string group_name) {
-    LOG_FNC();
-
-    // LOG_VAR(robot_description);
-    // LOG_VAR(group_name);
-
-    LOG("bio ik init", ros::this_node::getName());
-
-    /*rdf_loader::RDFLoader rdf_loader(robot_description_);
-    auto srdf = rdf_loader.getSRDF();
-    auto urdf_model = rdf_loader.getURDF();
-
-    if(!urdf_model || !srdf)
-    {
-        LOG("URDF and SRDF must be loaded for kinematics solver to work.");
-        return false;
-    }
-
-    robot_model.reset(new robot_model::RobotModel(urdf_model, srdf));*/
 
     if (model) {
       this->robot_model = model;
@@ -253,7 +234,6 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
                 std::string("bio2_memetic"));
     lookupParam("counter", ikparams.enable_counter, false);
     lookupParam("threads", ikparams.thread_count, 0);
-    lookupParam("random_seed", ikparams.random_seed, static_cast<int>(std::random_device()()));
 
     // initialize parameters for Problem
     lookupParam("dpos", ikparams.dpos, DBL_MAX);

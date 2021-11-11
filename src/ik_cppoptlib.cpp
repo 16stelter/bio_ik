@@ -41,33 +41,6 @@
 namespace bio_ik
 {
 
-/*
-struct IKOptLibProblem : cppoptlib::Problem<double>
-{
-    IKBase* ik;
-    std::vector<double> fk_values;
-    IKOptLibProblem(IKBase* ik) : ik(ik)
-    {
-    }
-    void initialize()
-    {
-        // set all variables to initial guess, including inactive ones
-        fk_values = ik->problem.initial_guess;
-    }
-    double value(const TVector& x)
-    {
-        // fill in active variables and compute fitness
-        for(size_t i = 0; i < ik->problem.active_variables.size(); i++) fk_values[ik->problem.active_variables[i]] = x[i];
-        return ik->computeFitness(fk_values);
-    }
-    bool callback(const cppoptlib::Criteria<double>& state, const TVector& x)
-    {
-        // check ik timeout
-        return ros::WallTime::now().toSec() < ik->problem.timeout;
-    }
-};
-*/
-
 // problem description for cppoptlib
 struct IKOptLibProblem : cppoptlib::BoundedProblem<double>
 {
