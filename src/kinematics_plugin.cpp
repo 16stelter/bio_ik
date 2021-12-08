@@ -44,7 +44,6 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <kdl_parser/kdl_parser.hpp>
-#include <moveit/kinematics_base/kinematics_base.h>
 #include <moveit/rdf_loader/rdf_loader.h>
 #include <pluginlib/class_list_macros.h>
 #include <srdfdom/model.h>
@@ -65,6 +64,8 @@
 #include <bio_ik/goal_types.h>
 
 using namespace bio_ik;
+namespace robot_model = moveit::core; // moveit2 no longer announces these namespaces, so we need to do it instead
+namespace robot_state = moveit::core;
 
 // implement BioIKKinematicsQueryOptions
 
@@ -214,7 +215,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     // for(auto& n : link_names) LOG("link", n);
 
     // bool enable_profiler;
-    lookupParam("profiler", enable_profiler, false);
+      kinematics::KinematicsBase::lookupParam(node_, "profiler", enable_profiler, false);
     // if(enable_profiler) Profiler::start();
 
     robot_info = RobotInfo(robot_model);
@@ -223,21 +224,21 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     ikparams.joint_model_group = joint_model_group;
 
     // initialize parameters for IKParallel
-    lookupParam("mode", ikparams.solver_class_name,
+    lookupParam(node_, "mode", ikparams.solver_class_name,
                 std::string("bio2_memetic"));
-    lookupParam("counter", ikparams.enable_counter, false);
-    lookupParam("threads", ikparams.thread_count, 0);
+    lookupParam(node_, "counter", ikparams.enable_counter, false);
+    lookupParam(node_, "threads", ikparams.thread_count, 0);
 
     // initialize parameters for Problem
-    lookupParam("dpos", ikparams.dpos, DBL_MAX);
-    lookupParam("drot", ikparams.drot, DBL_MAX);
-    lookupParam("dtwist", ikparams.dtwist, 1e-5);
+    lookupParam(node_, "dpos", ikparams.dpos, DBL_MAX);
+    lookupParam(node_, "drot", ikparams.drot, DBL_MAX);
+    lookupParam(node_, "dtwist", ikparams.dtwist, 1e-5);
 
     // initialize parameters for ik_evolution_1
-    lookupParam("no_wipeout", ikparams.opt_no_wipeout, false);
-    lookupParam("population_size", ikparams.population_size, 8);
-    lookupParam("elite_count", ikparams.elite_count, 4);
-    lookupParam("linear_fitness", ikparams.linear_fitness, false);
+    lookupParam(node_, "no_wipeout", ikparams.opt_no_wipeout, false);
+    lookupParam(node_, "population_size", ikparams.population_size, 8);
+    lookupParam(node_, "elite_count", ikparams.elite_count, 4);
+    lookupParam(node_, "linear_fitness", ikparams.linear_fitness, false);
 
     temp_state.reset(new moveit::core::RobotState(robot_model));
 
@@ -258,10 +259,10 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
         double rotation_scale = 0.5;
 
-        lookupParam("rotation_scale", rotation_scale, rotation_scale);
+        lookupParam(node_, "rotation_scale", rotation_scale, rotation_scale);
 
         bool position_only_ik = false;
-        lookupParam("position_only_ik", position_only_ik, position_only_ik);
+        lookupParam(node_, "position_only_ik", position_only_ik, position_only_ik);
         if (position_only_ik)
           rotation_scale = 0;
 
@@ -272,7 +273,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
       {
         double weight = 0;
-        lookupParam("center_joints_weight", weight, weight);
+        lookupParam(node_, "center_joints_weight", weight, weight);
         if (weight > 0.0) {
           auto *center_joints_goal = new bio_ik::CenterJointsGoal();
           center_joints_goal->setWeight(weight);
@@ -282,7 +283,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
       {
         double weight = 0;
-        lookupParam("avoid_joint_limits_weight", weight, weight);
+        lookupParam(node_, "avoid_joint_limits_weight", weight, weight);
         if (weight > 0.0) {
           auto *avoid_joint_limits_goal = new bio_ik::AvoidJointLimitsGoal();
           avoid_joint_limits_goal->setWeight(weight);
@@ -292,7 +293,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
       {
         double weight = 0;
-        lookupParam("minimal_displacement_weight", weight, weight);
+        lookupParam(node_, "minimal_displacement_weight", weight, weight);
         if (weight > 0.0) {
           auto *minimal_displacement_goal =
               new bio_ik::MinimalDisplacementGoal();
@@ -417,7 +418,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
                    const kinematics::KinematicsQueryOptions &options =
                        kinematics::KinematicsQueryOptions(),
                    const moveit::core::RobotState *context_state = NULL) const {
-    double t0 = ros::WallTime::now().toSec();
+    double t0 = std::time(0);
 
     // timeout = 0.1;
 
@@ -462,7 +463,7 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
       tipFrames.clear();
       for (size_t i = 0; i < ik_poses.size(); i++) {
         Eigen::Isometry3d p, r;
-        tf::poseMsgToEigen(ik_poses[i], p);
+        tf2::fromMsg(ik_poses[i], p);
         if (context_state) {
           r = context_state->getGlobalLinkTransform(getBaseFrame());
         } else {
