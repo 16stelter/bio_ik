@@ -52,7 +52,6 @@
 #include <urdf_model/model.h>
 
 #include <tf2_eigen/tf2_eigen.h>
-//#include <moveit/common_planning_interface_objects/common_objects.h>
 #include <moveit/kinematics_base/kinematics_base.h>
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_state/robot_state.h>
@@ -105,13 +104,6 @@ toBioIKKinematicsQueryOptions(const void *ptr) {
 
 namespace bio_ik_kinematics_plugin {
 
-// Fallback for older MoveIt versions which don't support lookupParam yet
-template <class T>
-static void lookupParam(const std::string &param, T &val,
-                        const T &default_val) {
-  ros::NodeHandle nodeHandle("~");
-  val = nodeHandle.param(param, default_val);
-}
 
 struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
   std::vector<std::string> joint_names, link_names;
@@ -138,15 +130,15 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
 
   virtual bool getPositionFK(const std::vector<std::string> &link_names,
                              const std::vector<double> &joint_angles,
-                             std::vector<geometry_msgs::Pose> &poses) const {
+                             std::vector<geometry_msgs::msg::Pose> &poses) const {
     LOG_FNC();
     return false;
   }
 
-  virtual bool getPositionIK(const geometry_msgs::Pose &ik_pose,
+  virtual bool getPositionIK(const geometry_msgs::msg::Pose &ik_pose,
                              const std::vector<double> &ik_seed_state,
                              std::vector<double> &solution,
-                             moveit_msgs::MoveItErrorCodes &error_code,
+                             moveit_msgs::msg::MoveItErrorCodes &error_code,
                              const kinematics::KinematicsQueryOptions &options =
                                  kinematics::KinematicsQueryOptions()) const {
     LOG_FNC();
@@ -170,7 +162,8 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
     static std::mutex cache_mutex;
     std::lock_guard<std::mutex> lock(cache_mutex);
     if (robot_model_cache.find(robot_description) == robot_model_cache.end()) {
-      rdf_loader::RDFLoader rdf_loader(robot_description);
+      auto node_ = rclcpp::Node::make_shared("bio_ik");
+      rdf_loader::RDFLoader rdf_loader(node_, robot_description);
       auto srdf = rdf_loader.getSRDF();
       auto urdf_model = rdf_loader.getURDF();
 
@@ -354,57 +347,57 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
   }
 
   virtual bool
-  searchPositionIK(const geometry_msgs::Pose &ik_pose,
+  searchPositionIK(const geometry_msgs::msg::Pose &ik_pose,
                    const std::vector<double> &ik_seed_state, double timeout,
                    std::vector<double> &solution,
-                   moveit_msgs::MoveItErrorCodes &error_code,
+                   moveit_msgs::msg::MoveItErrorCodes &error_code,
                    const kinematics::KinematicsQueryOptions &options =
                        kinematics::KinematicsQueryOptions()) const {
     LOG_FNC();
-    return searchPositionIK(std::vector<geometry_msgs::Pose>{ik_pose},
+    return searchPositionIK(std::vector<geometry_msgs::msg::Pose>{ik_pose},
                             ik_seed_state, timeout, std::vector<double>(),
                             solution, IKCallbackFn(), error_code, options);
   }
 
   virtual bool
-  searchPositionIK(const geometry_msgs::Pose &ik_pose,
+  searchPositionIK(const geometry_msgs::msg::Pose &ik_pose,
                    const std::vector<double> &ik_seed_state, double timeout,
                    const std::vector<double> &consistency_limits,
                    std::vector<double> &solution,
-                   moveit_msgs::MoveItErrorCodes &error_code,
+                   moveit_msgs::msg::MoveItErrorCodes &error_code,
                    const kinematics::KinematicsQueryOptions &options =
                        kinematics::KinematicsQueryOptions()) const {
     LOG_FNC();
-    return searchPositionIK(std::vector<geometry_msgs::Pose>{ik_pose},
+    return searchPositionIK(std::vector<geometry_msgs::msg::Pose>{ik_pose},
                             ik_seed_state, timeout, consistency_limits,
                             solution, IKCallbackFn(), error_code, options);
   }
 
   virtual bool
-  searchPositionIK(const geometry_msgs::Pose &ik_pose,
+  searchPositionIK(const geometry_msgs::msg::Pose &ik_pose,
                    const std::vector<double> &ik_seed_state, double timeout,
                    std::vector<double> &solution,
                    const IKCallbackFn &solution_callback,
-                   moveit_msgs::MoveItErrorCodes &error_code,
+                   moveit_msgs::msg::MoveItErrorCodes &error_code,
                    const kinematics::KinematicsQueryOptions &options =
                        kinematics::KinematicsQueryOptions()) const {
     LOG_FNC();
-    return searchPositionIK(std::vector<geometry_msgs::Pose>{ik_pose},
+    return searchPositionIK(std::vector<geometry_msgs::msg::Pose>{ik_pose},
                             ik_seed_state, timeout, std::vector<double>(),
                             solution, solution_callback, error_code, options);
   }
 
   virtual bool
-  searchPositionIK(const geometry_msgs::Pose &ik_pose,
+  searchPositionIK(const geometry_msgs::msg::Pose &ik_pose,
                    const std::vector<double> &ik_seed_state, double timeout,
                    const std::vector<double> &consistency_limits,
                    std::vector<double> &solution,
                    const IKCallbackFn &solution_callback,
-                   moveit_msgs::MoveItErrorCodes &error_code,
+                   moveit_msgs::msg::MoveItErrorCodes &error_code,
                    const kinematics::KinematicsQueryOptions &options =
                        kinematics::KinematicsQueryOptions()) const {
     LOG_FNC();
-    return searchPositionIK(std::vector<geometry_msgs::Pose>{ik_pose},
+    return searchPositionIK(std::vector<geometry_msgs::msg::Pose>{ik_pose},
                             ik_seed_state, timeout, consistency_limits,
                             solution, solution_callback, error_code, options);
   }
@@ -415,12 +408,12 @@ struct BioIKKinematicsPlugin : kinematics::KinematicsBase {
   };*/
 
   virtual bool
-  searchPositionIK(const std::vector<geometry_msgs::Pose> &ik_poses,
+  searchPositionIK(const std::vector<geometry_msgs::msg::Pose> &ik_poses,
                    const std::vector<double> &ik_seed_state, double timeout,
                    const std::vector<double> &consistency_limits,
                    std::vector<double> &solution,
                    const IKCallbackFn &solution_callback,
-                   moveit_msgs::MoveItErrorCodes &error_code,
+                   moveit_msgs::msg::MoveItErrorCodes &error_code,
                    const kinematics::KinematicsQueryOptions &options =
                        kinematics::KinematicsQueryOptions(),
                    const moveit::core::RobotState *context_state = NULL) const {
