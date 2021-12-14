@@ -11,19 +11,18 @@
     <maintainer email="0ruppel@informatik.uni-hamburg.de">Philipp Sebastian Ruppel</maintainer>
     <maintainer email="me@v4hn.de">Michael Goerner</maintainer>
 
+    <depend>moveit</depend>   
     <depend>moveit_core</depend>
+    <depend>moveit_common</depend>	    
     <depend>pluginlib</depend>
     <depend>eigen</depend>
     <depend>moveit_ros_planning</depend>
-    <depend>roscpp</depend>
     <depend>tf2</depend>
     <depend>tf2_ros</depend>
     <depend>tf2_eigen</depend>
     <depend>tf2_kdl</depend>
     <depend>tf2_geometry_msgs</depend>
-    <depend>eigen_conversions</depend>
 
-    <test_depend>rosunit</test_depend>
 
     <export>
         <build_type>ament_cmake</build_type>
